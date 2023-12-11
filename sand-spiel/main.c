@@ -12,6 +12,8 @@ const int CELL_HEIGHT = screenHeight / ROWS;
 
 const int COLUMN_SIZE = 5;
 
+const int VELOCITY = 5;
+
 int currentTool = 1;
 
 float dT = 0;
@@ -21,6 +23,7 @@ typedef struct Cell
 	int id;
 	int row;
 	int col;
+	bool solid;
 } Cell;
 
 Cell grid[COLS][ROWS];
@@ -28,10 +31,11 @@ Cell grid[COLS][ROWS];
 void InitGrid();
 void CellDraw(cell);
 bool PosIsValid(x, y, rand);
-void UpdateCell(col, row);
+void CellSimulation(col, row);
 void UpdateWater(col, row);
 void UpdateSand(col, row);
 void DrawSpawnerColumn(col, row);
+void UpdateCellPosition(int col, int row, int id, int col_num, int row_num);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -51,13 +55,21 @@ int main(void)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
+
 		dT += GetFrameTime();
+		//SAND
 		if (IsKeyPressed(KEY_ONE)) {
 			currentTool = 1;
 		}
+		//WATER
 		if (IsKeyPressed(KEY_TWO)) {
 			currentTool = 2;
 		}
+		//WOOD
+		if (IsKeyPressed(KEY_THREE)) {
+			currentTool = 3;
+		}
+		//EMPTY
 		if (IsKeyPressed(KEY_ZERO)) {
 			currentTool = 0;
 		}
@@ -75,7 +87,7 @@ int main(void)
 			for (int r = ROWS-1; r >= 0; r--)
 			{
 				if ( dT > .01) {
-					UpdateCell(c, r);
+					CellSimulation(c, r);
 				}
 			}
 		}
@@ -114,23 +126,34 @@ void DrawSpawnerColumn(int col, int row) {
 		for (int r = row; r < (row + COLUMN_SIZE); r++) {
 			if (PosIsValid(c, r)) {
 				grid[c][r].id = currentTool;
+				if (currentTool == 1 || currentTool == 3) {
+					grid[c][r].solid = true;
+				}
+				else {
+					grid[c][r].solid = false;
+				}
 			}
 		}
 	}
 }
 
 void CellDraw(Cell cell) {
-	if (cell.id == 1) {
+	switch (cell.id) {
+	case 1:
 		DrawRectangle(cell.col * CELL_WIDTH, cell.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, ORANGE);
-	}
-	else if (cell.id == 2) {
+		break;
+	case 2:
 		DrawRectangle(cell.col * CELL_WIDTH, cell.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, BLUE);
+		break;
+	case 3:
+		DrawRectangle(cell.col * CELL_WIDTH, cell.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, BROWN);
+		break;
 	}
 }
 
 bool PosIsValid(int x, int y) {
 	if (currentTool != 0) {
-		return x < ROWS&& x >= 0 && y < COLS&& y >= 0 && grid[x][y].id == 0;
+		return x < ROWS&& x >= 0 && y < COLS&& y >= 0 && !grid[x][y].solid;
 	}
 	else {
 		return x < ROWS&& x >= 0 && y < COLS&& y >= 0;
@@ -145,13 +168,14 @@ void InitGrid() {
 			grid[c][r] = (Cell){
 				.col = c,
 				.row = r,
-				.id = 0
+				.id = 0,
+				.solid = false
 			};
 		}
 	}
 }
 
-void UpdateCell(int col, int row) {
+void CellSimulation(int col, int row) {
 	//SAND
 	if (grid[col][row].id == 1) {
 		UpdateSand(col, row);
@@ -162,54 +186,59 @@ void UpdateCell(int col, int row) {
 }
 
 void UpdateSand(int col, int row) {
-	
-	if (row != ROWS-1) {
+	if (row < ROWS-1) {
 		//Check bottom
-		if (row <= ROWS - 1 && grid[col][row + 1].id != 1) {
-			grid[col][row].id = 0;
-			grid[col][row + 1].id = 1;
+		if (!grid[col][row + 1].solid) {
+			UpdateCellPosition(col, row, 1, 0, 1);
 		}
 		//Check left
-		else if (row <= ROWS - 1 && col >= 0 && grid[col - 1][row + 1].id != 1) {
-			grid[col][row].id = 0;
-			grid[col - 1][row + 1].id = 1;
+		else if (col >= 0 && !grid[col - 1][row + 1].solid) {
+			UpdateCellPosition(col, row, 1, -1, 1);
 		}
 		//Check right
-		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row + 1].id != 1) {
-			grid[col][row].id = 0;
-			grid[col + 1][row + 1].id = 1;
+		else if (col <= COLS - 1 && !grid[col + 1][row + 1].solid) {
+			UpdateCellPosition(col, row, 1, 1, 1);
 		}
 	}
 }
 
 void UpdateWater(int col, int row) {
+	// Used to add randomness to water direction
+	// If 0 go left and if 1 go right
 	int randValue = GetRandomValue(0,1);
-	if (row != ROWS-1) {
+	if (row < ROWS-1) {
 		//Check bottom
-		if (row <= ROWS - 1 && grid[col][row + 1].id == 0) {
-			grid[col][row].id = 0;
-			grid[col][row + 1].id = 2;
+		if (grid[col][row + 1].id == 0) {
+			UpdateCellPosition(col, row, 2, 0, 1);
 		}
 		//Check down left
-		else if (row <= ROWS - 1 && col >= 0 && grid[col - 1][row + 1].id == 0 && randValue == 0) {
-			grid[col][row].id = 0;
-			grid[col - 1][row + 1].id = 2;
+		else if (col >= 0 && grid[col - 1][row + 1].id == 0 && randValue == 0) {
+			UpdateCellPosition(col, row, 2, -1, 1);
 		}
 		//Check down right
-		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row + 1].id == 0 && randValue == 1) {
-			grid[col][row].id = 0;
-			grid[col + 1][row + 1].id = 2;
+		else if (col <= COLS - 1 && grid[col + 1][row + 1].id == 0 && randValue == 1) {
+			UpdateCellPosition(col, row, 2, 1, 1);
 		}
 		// Check left
-		else if (row <= ROWS - 1 && col > 0 && grid[col - 1][row].id == 0 && randValue == 0) {
-			grid[col][row].id = 0;
-			grid[col - 1][row].id = 2;
+		else if (col > 0 && grid[col - 1][row].id == 0 && randValue == 0) {
+			UpdateCellPosition(col, row, 2, -1, 0);
 		}
 		// Check right
-		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row].id == 0 && randValue == 1) {
-			grid[col][row].id = 0;
-			grid[col + 1][row].id = 2;
-
+		else if (col <= COLS - 1 && grid[col + 1][row].id == 0 && randValue == 1) {
+			UpdateCellPosition(col, row, 2, 1, 0);
 		}
+	}
+}
+
+void UpdateCellPosition(int col, int row, int id, int col_num, int row_num) {
+	grid[col][row].id = grid[col + col_num][row + row_num].id;
+	grid[col][row].solid = false;
+	grid[col + col_num][row + row_num].id = id;
+	//Check if solid
+	if (id == 1 || id == 3) {
+		grid[col + col_num][row + row_num].solid = true;
+	}
+	else {
+		grid[col + col_num][row + row_num].solid = false;
 	}
 }
