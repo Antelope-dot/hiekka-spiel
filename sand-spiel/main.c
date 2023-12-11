@@ -21,11 +21,6 @@ typedef struct Cell
 	int col;
 } Cell;
 
-enum TYPE {
-	EMPTY,
-	SAND
-};
-
 Cell grid[COLS][ROWS];
 
 void InitGrid();
@@ -64,8 +59,8 @@ int main(void)
 		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
 		{
 			Vector2 mPos = GetMousePosition();
-			int posX = mPos.x / CELL_WIDTH;
-			int posY = mPos.y / CELL_HEIGHT;
+			int posX = (int)mPos.x / CELL_WIDTH;
+			int posY = (int)mPos.y / CELL_HEIGHT;
 			int rand = GetRandomValue(0, 9);
 			if (PosIsValid(posX, posY, rand)) {
 				grid[posX + rand][posY + rand].id = currentTool;
@@ -76,14 +71,12 @@ int main(void)
 		{
 			for (int r = ROWS-1; r >= 0; r--)
 			{
-				//if (dT > .05) {
-					UpdateCell(c, r);
-				//}
+				UpdateCell(c, r);
 			}
 		}
 
 		if (dT > .05) {
-			dT -= .05;
+			dT = 0.;
 		}
 		// Draw
 		//----------------------------------------------------------------------------------
@@ -172,7 +165,7 @@ void UpdateSand(int col, int row) {
 }
 
 void UpdateWater(int col, int row) {
-	
+	int randValue = GetRandomValue(0,1);
 	if (row != ROWS-1) {
 		//Check bottom
 		if (row <= ROWS - 1 && grid[col][row + 1].id == 0) {
@@ -180,22 +173,22 @@ void UpdateWater(int col, int row) {
 			grid[col][row + 1].id = 2;
 		}
 		//Check down left
-		else if (row <= ROWS - 1 && col >= 0 && grid[col - 1][row + 1].id == 0) {
+		else if (row <= ROWS - 1 && col >= 0 && grid[col - 1][row + 1].id == 0 && randValue == 0) {
 			grid[col][row].id = 0;
 			grid[col - 1][row + 1].id = 2;
 		}
 		//Check down right
-		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row + 1].id == 0) {
+		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row + 1].id == 0 && randValue == 1) {
 			grid[col][row].id = 0;
 			grid[col + 1][row + 1].id = 2;
 		}
 		// Check left
-		else if (row <= ROWS - 1 && col > 0 && grid[col - 1][row].id == 0) {
+		else if (row <= ROWS - 1 && col > 0 && grid[col - 1][row].id == 0 && randValue == 0) {
 			grid[col][row].id = 0;
 			grid[col - 1][row].id = 2;
 		}
 		// Check right
-		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row].id == 0) {
+		else if (row <= ROWS - 1 && col <= COLS - 1 && grid[col + 1][row].id == 0 && randValue == 1) {
 			grid[col][row].id = 0;
 			grid[col + 1][row].id = 2;
 

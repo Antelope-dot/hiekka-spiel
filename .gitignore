@@ -52,3 +52,6 @@ Mkfile.old
 dkms.conf
 
 .vs
+
+# Build results
+x64/

@@ -1,6 +1,0 @@
-﻿  main.c
-C:\Users\Spurdo\repos\hiekka-spiel\sand-spiel\main.c(86,13): warning C4305: '-=': truncation from 'double' to 'float'
-C:\Users\Spurdo\repos\hiekka-spiel\sand-spiel\main.c(67,1): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Spurdo\repos\hiekka-spiel\sand-spiel\main.c(68,1): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-  sand-spiel.vcxproj -> C:\Users\Spurdo\repos\hiekka-spiel\x64\Debug\sand-spiel.exe
