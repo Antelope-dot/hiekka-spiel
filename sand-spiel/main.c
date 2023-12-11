@@ -10,6 +10,8 @@
 const int CELL_WIDTH = screenWidth / COLS;
 const int CELL_HEIGHT = screenHeight / ROWS;
 
+const int COLUMN_SIZE = 5;
+
 int currentTool = 1;
 
 float dT = 0;
@@ -29,6 +31,7 @@ bool PosIsValid(x, y, rand);
 void UpdateCell(col, row);
 void UpdateWater(col, row);
 void UpdateSand(col, row);
+void DrawSpawnerColumn(col, row);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -55,27 +58,29 @@ int main(void)
 		if (IsKeyPressed(KEY_TWO)) {
 			currentTool = 2;
 		}
+		if (IsKeyPressed(KEY_ZERO)) {
+			currentTool = 0;
+		}
 
 		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
 		{
 			Vector2 mPos = GetMousePosition();
 			int posX = (int)mPos.x / CELL_WIDTH;
 			int posY = (int)mPos.y / CELL_HEIGHT;
-			int rand = GetRandomValue(0, 9);
-			if (PosIsValid(posX, posY, rand)) {
-				grid[posX + rand][posY + rand].id = currentTool;
-			}
+			DrawSpawnerColumn(posX, posY);
 		}
 
 		for (int c = 0; c < COLS; c++)
 		{
 			for (int r = ROWS-1; r >= 0; r--)
 			{
-				UpdateCell(c, r);
+				if ( dT > .01) {
+					UpdateCell(c, r);
+				}
 			}
 		}
 
-		if (dT > .05) {
+		if (dT > .01) {
 			dT = 0.;
 		}
 		// Draw
@@ -104,6 +109,16 @@ int main(void)
 	return 0;
 }
 
+void DrawSpawnerColumn(int col, int row) {
+	for (int c = col; c < (col + COLUMN_SIZE); c++) {
+		for (int r = row; r < (row + COLUMN_SIZE); r++) {
+			if (PosIsValid(c, r)) {
+				grid[c][r].id = currentTool;
+			}
+		}
+	}
+}
+
 void CellDraw(Cell cell) {
 	if (cell.id == 1) {
 		DrawRectangle(cell.col * CELL_WIDTH, cell.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, ORANGE);
@@ -111,12 +126,15 @@ void CellDraw(Cell cell) {
 	else if (cell.id == 2) {
 		DrawRectangle(cell.col * CELL_WIDTH, cell.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, BLUE);
 	}
-	//DrawRectangleLines(cell.col * CELL_WIDTH, cell.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, GRAY);
-
 }
 
-bool PosIsValid(int x, int y, int rand)   {
-	return x + rand < ROWS && x + rand >= 0 && y < COLS && y + rand >= 0 && grid[x+rand][y+rand].id == 0;
+bool PosIsValid(int x, int y) {
+	if (currentTool != 0) {
+		return x < ROWS&& x >= 0 && y < COLS&& y >= 0 && grid[x][y].id == 0;
+	}
+	else {
+		return x < ROWS&& x >= 0 && y < COLS&& y >= 0;
+	}
 }
 
 void InitGrid() {
